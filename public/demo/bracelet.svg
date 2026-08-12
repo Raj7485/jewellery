@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1200" viewBox="0 0 1000 1200" role="img" aria-label="Luxury bracelet demo image">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fffcf8" />
+      <stop offset="100%" stop-color="#efe0ca" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#f9de95" stop-opacity="0.9" />
+      <stop offset="70%" stop-color="#d4a43d" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#d4a43d" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff2c0" />
+      <stop offset="35%" stop-color="#e5c154" />
+      <stop offset="100%" stop-color="#8f6815" />
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="1200" fill="url(#bg)" />
+  <circle cx="500" cy="310" r="260" fill="url(#glow)" />
+  <ellipse cx="500" cy="890" rx="270" ry="44" fill="#000000" opacity="0.12" />
+  <g transform="translate(160,170)">
+    <path d="M330 150
+             C520 150, 630 270, 630 450
+             C630 630, 520 750, 330 750
+             C140 750, 30 630, 30 450
+             C30 270, 140 150, 330 150 Z"
+          fill="none" stroke="url(#gold)" stroke-width="28" />
+    <path d="M330 185
+             C495 185, 595 282, 595 450
+             C595 618, 495 715, 330 715
+             C165 715, 65 618, 65 450
+             C65 282, 165 185, 330 185 Z"
+          fill="none" stroke="#fff6dd" stroke-width="6" opacity="0.8" />
+    <circle cx="330" cy="150" r="24" fill="#fff2c5" stroke="url(#gold)" stroke-width="6" />
+    <circle cx="330" cy="750" r="24" fill="#fff2c5" stroke="url(#gold)" stroke-width="6" />
+    <circle cx="630" cy="450" r="24" fill="#fff2c5" stroke="url(#gold)" stroke-width="6" />
+    <circle cx="30" cy="450" r="24" fill="#fff2c5" stroke="url(#gold)" stroke-width="6" />
+    <g fill="#fff7d9" stroke="url(#gold)" stroke-width="5">
+      <circle cx="330" cy="450" r="20" />
+      <circle cx="420" cy="450" r="20" />
+      <circle cx="240" cy="450" r="20" />
+      <circle cx="330" cy="360" r="20" />
+      <circle cx="330" cy="540" r="20" />
+    </g>
+  </g>
+</svg>

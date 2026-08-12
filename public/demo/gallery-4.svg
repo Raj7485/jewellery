@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900" viewBox="0 0 900 900" role="img" aria-label="Luxury jewelry gallery image">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fffdf9" />
+      <stop offset="100%" stop-color="#efdfc9" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#f8da82" stop-opacity="0.9" />
+      <stop offset="70%" stop-color="#d4a43d" stop-opacity="0.16" />
+      <stop offset="100%" stop-color="#d4a43d" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff2c8" />
+      <stop offset="40%" stop-color="#e4be55" />
+      <stop offset="100%" stop-color="#8f6815" />
+    </linearGradient>
+  </defs>
+  <rect width="900" height="900" fill="url(#bg)" />
+  <circle cx="470" cy="320" r="250" fill="url(#glow)" />
+  <g transform="translate(150,175)">
+    <path d="M70 130 C120 80, 190 80, 240 130" fill="none" stroke="url(#gold)" stroke-width="14" stroke-linecap="round" />
+    <circle cx="155" cy="240" r="76" fill="#fff8e9" stroke="url(#gold)" stroke-width="14" />
+    <circle cx="155" cy="240" r="34" fill="#f0d27d" opacity="0.5" />
+    <path d="M330 130 C380 80, 450 80, 500 130" fill="none" stroke="url(#gold)" stroke-width="14" stroke-linecap="round" />
+    <circle cx="415" cy="240" r="76" fill="#fff8e9" stroke="url(#gold)" stroke-width="14" />
+    <circle cx="415" cy="240" r="34" fill="#f0d27d" opacity="0.5" />
+    <path d="M155 316 C155 414, 415 414, 415 316" fill="none" stroke="url(#gold)" stroke-width="12" stroke-linecap="round" />
+  </g>
+</svg>

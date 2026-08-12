@@ -1,0 +1,38 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-ivory font-body text-stone-900;
+}
+
+::selection {
+  background: rgba(212, 164, 61, 0.22);
+}
+
+.luxury-grid {
+  background-image:
+    linear-gradient(rgba(17, 17, 17, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 17, 17, 0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.hero-glow {
+  background:
+    radial-gradient(circle at top left, rgba(212, 164, 61, 0.28), transparent 35%),
+    radial-gradient(circle at right center, rgba(17, 17, 17, 0.16), transparent 28%);
+}
+
+.gold-line {
+  background: linear-gradient(90deg, transparent, #d4a43d, transparent);
+}

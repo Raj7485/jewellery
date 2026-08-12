@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900" viewBox="0 0 900 900" role="img" aria-label="Luxury jewelry gallery image">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fffdf9" />
+      <stop offset="100%" stop-color="#f2e4cf" />
+    </linearGradient>
+    <radialGradient id="goldGlow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#f4d57a" stop-opacity="0.9" />
+      <stop offset="70%" stop-color="#d4a43d" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#d4a43d" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff4c8" />
+      <stop offset="45%" stop-color="#e6c057" />
+      <stop offset="100%" stop-color="#8d6814" />
+    </linearGradient>
+  </defs>
+  <rect width="900" height="900" fill="url(#bg)" />
+  <circle cx="460" cy="320" r="250" fill="url(#goldGlow)" />
+  <g transform="translate(120,170)">
+    <circle cx="180" cy="240" r="90" fill="#fff8ea" stroke="url(#gold)" stroke-width="18" />
+    <polygon points="180,150 208,210 273,218 226,262 238,326 180,296 122,326 134,262 87,218 152,210" fill="#fff5d2" stroke="url(#gold)" stroke-width="6" />
+    <circle cx="460" cy="240" r="90" fill="#fff8ea" stroke="url(#gold)" stroke-width="18" />
+    <polygon points="460,150 488,210 553,218 506,262 518,326 460,296 402,326 414,262 367,218 432,210" fill="#fff5d2" stroke="url(#gold)" stroke-width="6" />
+    <path d="M185 400 C255 500, 415 500, 485 400" fill="none" stroke="url(#gold)" stroke-width="14" stroke-linecap="round" />
+    <path d="M170 425 C255 550, 415 550, 500 425" fill="none" stroke="url(#gold)" stroke-width="10" stroke-linecap="round" opacity="0.85" />
+  </g>
+</svg>
