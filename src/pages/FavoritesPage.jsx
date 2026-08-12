@@ -69,7 +69,7 @@ export default function FavoritesPage({
           Your Favorite Jewelry
         </h1>
         <p className="mt-3 text-sm leading-7 text-stone-600">
-          These pieces are saved to your account in MongoDB.
+        Timeless jewelry crafted to add elegance and sparkle to every moment.
         </p>
       </div>
 

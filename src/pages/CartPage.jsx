@@ -18,7 +18,7 @@ import { useAuth } from "../context/AuthContext";
 import { formatINR, toInrAmount } from "../utils/currency";
 
 const GST_RATE = 0.03;
-const FREE_DELIVERY_THRESHOLD = 50000;
+const FREE_DELIVERY_THRESHOLD = 20000;
 const DELIVERY_FEE = 249;
 
 const coupons = {
@@ -31,7 +31,7 @@ const coupons = {
   SPARKLE15: {
     code: "SPARKLE15",
     label: "15% off up to ₹9,000",
-    minSpend: 75000,
+    minSpend: 50000,
     discount: (subtotal) => Math.min(subtotal * 0.15, 9000),
   },
   WELCOME500: {
@@ -204,7 +204,7 @@ export default function CartPage({
             <div className="grid gap-0 md:grid-cols-[1fr_260px]">
               <div className="bg-charcoal p-6 text-white sm:p-8">
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-300">
-                  Indian checkout
+                  checkout
                 </p>
                 <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
                   Your Cart
@@ -385,7 +385,7 @@ export default function CartPage({
                     type="text"
                     value={couponInput}
                     onChange={(event) => setCouponInput(event.target.value)}
-                    placeholder="JEWEL10"
+                    placeholder="Apply Coupon code"
                     className="min-w-0 flex-1 bg-transparent text-sm font-medium uppercase outline-none placeholder:text-stone-400"
                   />
                 </div>
@@ -474,7 +474,7 @@ export default function CartPage({
               {
                 icon: FiTruck,
                 title: "Insured delivery",
-                text: "Free over ₹50,000 with tamper-safe luxury packaging.",
+                text: "Free over ₹20,000 with tamper-safe luxury packaging.",
               },
               {
                 icon: FiShield,
