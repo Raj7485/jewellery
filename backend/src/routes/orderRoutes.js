@@ -3,14 +3,13 @@ import { protect } from "../middleware/authMiddleware.js";
 import Offer from "../models/Offer.js";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import { initiatePhonePePay, verifyPhonePeStatus } from "../utils/phonepe.js";
 
 const router = express.Router();
 const GST_RATE = 0.03;
 const FREE_DELIVERY_THRESHOLD = 20000;
 const DELIVERY_FEE = 249;
 const USD_TO_INR_RATE = 83;
-
-router.use(protect);
 
 function getProductId(product) {
   return product?._id ? product._id.toString() : product?.toString();
@@ -43,6 +42,75 @@ function toInrAmount(value, currency = "$") {
 
   return amount * USD_TO_INR_RATE;
 }
+
+/* ─── PhonePe Webhook Callback (Public) ───────────────────── */
+router.post("/phonepe/callback", async (req, res) => {
+  try {
+    const { response } = req.body || {};
+    if (response) {
+      const decoded = JSON.parse(Buffer.from(response, "base64").toString("utf-8"));
+      const merchantTransactionId = decoded.data?.merchantTransactionId;
+
+      if (merchantTransactionId) {
+        const order = await Order.findOne({ merchantTransactionId });
+        if (order) {
+          if (decoded.code === "PAYMENT_SUCCESS" || decoded.data?.state === "COMPLETED") {
+            order.paymentStatus = "paid";
+            order.status = "confirmed";
+            order.phonepeTransactionId = decoded.data?.transactionId || order.phonepeTransactionId;
+            order.paymentDetails = decoded.data || {};
+            await order.save();
+          }
+        }
+      }
+    }
+    return res.status(200).json({ status: "SUCCESS" });
+  } catch (error) {
+    console.error("PhonePe callback error:", error);
+    return res.status(200).json({ status: "ERROR" });
+  }
+});
+
+/* ─── PhonePe Status Verification ────────────────────────── */
+router.get("/phonepe/status/:merchantTransactionId", async (req, res, next) => {
+  try {
+    const { merchantTransactionId } = req.params;
+    const order = await Order.findOne({ merchantTransactionId });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found for transaction." });
+    }
+
+    const phonepeRes = await verifyPhonePeStatus(merchantTransactionId);
+
+    if (phonepeRes.code === "PAYMENT_SUCCESS" || phonepeRes.data?.state === "COMPLETED") {
+      order.paymentStatus = "paid";
+      if (order.status === "pending") {
+        order.status = "confirmed";
+      }
+      order.phonepeTransactionId = phonepeRes.data?.transactionId || order.phonepeTransactionId;
+      order.paymentDetails = phonepeRes.data || {};
+      await order.save();
+    } else if (phonepeRes.code === "PAYMENT_ERROR" || phonepeRes.data?.state === "FAILED") {
+      order.paymentStatus = "pending";
+      order.paymentDetails = phonepeRes.data || {};
+      await order.save();
+    }
+
+    return res.json({
+      success: true,
+      order,
+      phonepeData: phonepeRes.data,
+      code: phonepeRes.code,
+      message: phonepeRes.message,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/* ─── Protected Routes ───────────────────────────────────── */
+router.use(protect);
 
 router.get("/mine", async (req, res, next) => {
   try {
@@ -109,6 +177,12 @@ router.post("/", async (req, res, next) => {
     const total = taxableAmount + gst + delivery;
     const orderNumber = `LJ-${Date.now().toString().slice(-7)}`;
 
+    const selectedPaymentMethod = req.body.paymentMethod || "cod";
+    const isPhonePe = selectedPaymentMethod === "phonepe" || selectedPaymentMethod === "upi";
+    const merchantTransactionId = isPhonePe
+      ? `MT${Date.now()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+      : "";
+
     const order = await Order.create({
       orderNumber,
       user: req.user._id,
@@ -125,7 +199,9 @@ router.post("/", async (req, res, next) => {
       delivery,
       total,
       couponCode,
-      paymentMethod: req.body.paymentMethod || "cod",
+      paymentMethod: selectedPaymentMethod,
+      paymentStatus: "pending",
+      merchantTransactionId,
       notes: req.body.notes || "",
     });
 
@@ -142,6 +218,38 @@ router.post("/", async (req, res, next) => {
 
     req.user.cartItems = [];
     await req.user.save();
+
+    // If PhonePe payment, initiate payment with gateway
+    if (isPhonePe) {
+      try {
+        const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+        const redirectUrl = `${clientUrl}/#cart?payment=check&txnId=${merchantTransactionId}&orderId=${order._id}`;
+        const callbackUrl = `${process.env.BACKEND_URL || "http://localhost:5000"}/api/orders/phonepe/callback`;
+
+        const phonepeResult = await initiatePhonePePay({
+          merchantTransactionId,
+          merchantUserId: req.user._id.toString(),
+          amountInRupees: total,
+          redirectUrl,
+          callbackUrl,
+          mobileNumber: req.body.phone || "9999999999",
+        });
+
+        return res.status(201).json({
+          data: order,
+          paymentUrl: phonepeResult.redirectUrl,
+          merchantTransactionId,
+          message: "Order placed. Redirecting to PhonePe...",
+        });
+      } catch (phonepeErr) {
+        console.error("PhonePe Initiation Error:", phonepeErr);
+        return res.status(201).json({
+          data: order,
+          warning: "Payment gateway initiation delayed. You can retry from your orders.",
+          message: "Order created. Please complete payment.",
+        });
+      }
+    }
 
     res.status(201).json({ data: order, message: "Order placed successfully." });
   } catch (error) {

@@ -560,7 +560,15 @@ function OrderDetailModal({ order, onClose }) {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-stone-100 bg-stone-50 p-3 text-center">
               <p className="text-[10px] uppercase tracking-widest text-stone-400">Payment</p>
-              <p className="mt-1 text-sm font-bold text-charcoal capitalize">{order.paymentMethod || "—"}</p>
+              <p className="mt-1 text-sm font-bold text-charcoal capitalize flex items-center justify-center gap-1.5">
+                {order.paymentMethod === "phonepe" ? (
+                  <span className="inline-flex items-center gap-1 rounded bg-purple-100 px-2 py-0.5 text-xs font-bold text-[#5F259F]">
+                    PhonePe
+                  </span>
+                ) : (
+                  order.paymentMethod || "—"
+                )}
+              </p>
             </div>
             <div className="rounded-2xl border border-stone-100 bg-stone-50 p-3 text-center">
               <p className="text-[10px] uppercase tracking-widest text-stone-400">Payment Status</p>
@@ -574,6 +582,26 @@ function OrderDetailModal({ order, onClose }) {
               <p className="mt-1 text-sm font-bold text-charcoal">{fmt(order.createdAt)}</p>
             </div>
           </div>
+          {(order.phonepeTransactionId || order.merchantTransactionId) && (
+            <div className="rounded-2xl border border-purple-100 bg-purple-50/50 p-3.5 text-xs text-stone-600 space-y-1">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-purple-900">PhonePe Gateway Transaction</span>
+                <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold text-[#5F259F]">UAT Sandbox</span>
+              </div>
+              {order.phonepeTransactionId && (
+                <div className="flex justify-between">
+                  <span className="text-stone-500">PhonePe Txn ID:</span>
+                  <span className="font-mono font-medium text-charcoal">{order.phonepeTransactionId}</span>
+                </div>
+              )}
+              {order.merchantTransactionId && (
+                <div className="flex justify-between">
+                  <span className="text-stone-500">Merchant Txn ID:</span>
+                  <span className="font-mono font-medium text-stone-500">{order.merchantTransactionId}</span>
+                </div>
+              )}
+            </div>
+          )}
           {order.notes && (
             <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
               <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-amber-600">Order Notes</p>

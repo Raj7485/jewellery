@@ -139,6 +139,10 @@ export function createOrder(payload) {
   });
 }
 
+export function checkPhonePePaymentStatus(merchantTransactionId) {
+  return request(`/orders/phonepe/status/${merchantTransactionId}`);
+}
+
 export function getAdminSummary() {
   return request("/admin/summary");
 }

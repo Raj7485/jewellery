@@ -45,7 +45,7 @@ const orderSchema = new mongoose.Schema(
     couponCode: { type: String, default: "", trim: true, uppercase: true },
     paymentMethod: {
       type: String,
-      enum: ["cod", "upi", "card"],
+      enum: ["cod", "upi", "card", "phonepe"],
       default: "cod",
     },
     paymentStatus: {
@@ -58,11 +58,14 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled"],
       default: "pending",
     },
+    merchantTransactionId: { type: String, default: "", trim: true },
+    phonepeTransactionId: { type: String, default: "", trim: true },
+    paymentDetails: { type: mongoose.Schema.Types.Mixed, default: {} },
     notes: { type: String, default: "", trim: true },
   },
   { timestamps: true }
 );
 
-orderSchema.index({ orderNumber: 1, status: 1, createdAt: -1 });
+orderSchema.index({ orderNumber: 1, merchantTransactionId: 1, status: 1, createdAt: -1 });
 
 export default mongoose.model("Order", orderSchema);

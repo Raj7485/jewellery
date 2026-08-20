@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  FiAlertCircle,
   FiCheckCircle,
+  FiClock,
   FiCreditCard,
   FiGift,
   FiMinus,
@@ -14,7 +16,11 @@ import {
 } from "react-icons/fi";
 import CatalogImage from "../components/CatalogImage";
 import FavoriteButton from "../components/FavoriteButton";
-import { createOrder, getActiveOffers } from "../api/catalog";
+import {
+  checkPhonePePaymentStatus,
+  createOrder,
+  getActiveOffers,
+} from "../api/catalog";
 import { useAuth } from "../context/AuthContext";
 import { formatINR, toInrAmount } from "../utils/currency";
 
@@ -71,6 +77,170 @@ function getProductId(product) {
   return product._id || product.id;
 }
 
+/* ─── PhonePe Logo SVG ──────────────────────────────────── */
+function PhonePeBadge() {
+  return (
+    <div className="inline-flex items-center gap-1.5 rounded-full bg-[#5F259F] px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+      <svg className="h-3.5 w-3.5" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="24" fill="#5F259F" />
+        <path
+          d="M26.4 12H19.2C17.43 12 16 13.43 16 15.2V32.8C16 34.57 17.43 36 19.2 36H26.4C28.17 36 29.6 34.57 29.6 32.8V15.2C29.6 13.43 28.17 12 26.4 12Z"
+          fill="white"
+        />
+        <path
+          d="M22.5 16.5H25.5C26.33 16.5 27 17.17 27 18C27 18.83 26.33 19.5 25.5 19.5H22.5V16.5ZM22.5 21H24.5C25.33 21 26 21.67 26 22.5C26 23.33 25.33 24 24.5 24H22.5V21ZM19.5 14V34H22.5V25.5H24.5C26.98 25.5 29 23.48 29 21C29 19.7 28.45 18.52 27.56 17.72C28.44 16.92 29 15.74 29 14.5C29 12.02 26.98 10 24.5 10H19.5V14Z"
+          fill="#5F259F"
+        />
+      </svg>
+      <span>PhonePe</span>
+    </div>
+  );
+}
+
+/* ─── Payment Result Modal ──────────────────────────────── */
+function PaymentResultModal({ result, onClose, onNavigateHome }) {
+  if (!result) return null;
+
+  const isSuccess =
+    result.code === "PAYMENT_SUCCESS" ||
+    result.order?.paymentStatus === "paid" ||
+    result.order?.paymentMethod === "cod";
+  const isPending =
+    result.code === "PAYMENT_PENDING" ||
+    result.order?.paymentStatus === "pending";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white p-6 shadow-2xl animate-fadeUp sm:p-8">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-stone-100 text-stone-600 transition hover:bg-stone-200"
+        >
+          <FiX size={18} />
+        </button>
+
+        <div className="text-center">
+          <div
+            className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${
+              isSuccess
+                ? "bg-emerald-100 text-emerald-600"
+                : isPending
+                  ? "bg-amber-100 text-amber-600"
+                  : "bg-rose-100 text-rose-600"
+            }`}
+          >
+            {isSuccess ? (
+              <FiCheckCircle size={36} />
+            ) : isPending ? (
+              <FiClock size={36} />
+            ) : (
+              <FiAlertCircle size={36} />
+            )}
+          </div>
+
+          <p className="text-xs font-bold uppercase tracking-widest text-gold-600">
+            {isSuccess
+              ? "Payment Completed"
+              : isPending
+                ? "Payment Processing"
+                : "Payment Incomplete"}
+          </p>
+          <h2 className="mt-1 font-display text-2xl font-bold text-charcoal sm:text-3xl">
+            {isSuccess
+              ? "Order Confirmed!"
+              : isPending
+                ? "Awaiting Confirmation"
+                : "Payment Could Not Be Completed"}
+          </h2>
+          <p className="mt-2 text-sm text-stone-500">
+            {result.message ||
+              (isSuccess
+                ? "Your order has been successfully placed."
+                : "Please check your transaction status or try again.")}
+          </p>
+        </div>
+
+        {result.order && (
+          <div className="mt-6 rounded-2xl border border-stone-100 bg-stone-50 p-4 space-y-2.5 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-stone-500">Order Number</span>
+              <span className="font-mono font-bold text-charcoal">
+                {result.order.orderNumber}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-stone-500">Amount Paid</span>
+              <span className="font-bold text-charcoal">
+                {formatINR(result.order.total || 0)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-stone-500">Payment Gateway</span>
+              <span className="font-semibold text-charcoal flex items-center gap-1.5">
+                {result.order.paymentMethod === "phonepe" ? (
+                  <>
+                    <span className="h-2 w-2 rounded-full bg-[#5F259F]" /> PhonePe Sandbox
+                  </>
+                ) : (
+                  result.order.paymentMethod?.toUpperCase()
+                )}
+              </span>
+            </div>
+            {result.order.phonepeTransactionId && (
+              <div className="flex justify-between items-center">
+                <span className="text-stone-500">PhonePe Txn ID</span>
+                <span className="font-mono text-xs font-medium text-stone-700">
+                  {result.order.phonepeTransactionId}
+                </span>
+              </div>
+            )}
+            {result.order.merchantTransactionId && (
+              <div className="flex justify-between items-center">
+                <span className="text-stone-500">Merchant Txn ID</span>
+                <span className="font-mono text-xs text-stone-500">
+                  {result.order.merchantTransactionId}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between items-center">
+              <span className="text-stone-500">Payment Status</span>
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${
+                  result.order.paymentStatus === "paid"
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-amber-100 text-amber-700"
+                }`}
+              >
+                {result.order.paymentStatus}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
+          <button
+            onClick={() => {
+              onClose();
+              if (onNavigateHome) onNavigateHome();
+            }}
+            className="flex-1 rounded-xl bg-charcoal py-3 text-sm font-semibold text-white transition hover:bg-stone-800"
+          >
+            Continue Shopping
+          </button>
+          <button
+            onClick={onClose}
+            className="rounded-xl border border-stone-200 bg-white px-5 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── CartPage Component ────────────────────────────────── */
 export default function CartPage({
   onNavigateHome,
   onNavigateShop,
@@ -97,10 +267,13 @@ export default function CartPage({
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [coupons, setCoupons] = useState(fallbackCoupons);
+  const [paymentResult, setPaymentResult] = useState(null);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+
   const [checkoutData, setCheckoutData] = useState({
     phone: "",
     address: "",
-    paymentMethod: "cod",
+    paymentMethod: "phonepe",
   });
 
   const subtotal = useMemo(() => toInrAmount(cartTotal), [cartTotal]);
@@ -117,6 +290,7 @@ export default function CartPage({
   const grandTotal = taxableAmount + gst + delivery;
   const savingsToFreeDelivery = Math.max(FREE_DELIVERY_THRESHOLD - taxableAmount, 0);
 
+  // Load Offers
   useEffect(() => {
     let isActive = true;
 
@@ -143,6 +317,42 @@ export default function CartPage({
       isActive = false;
     };
   }, []);
+
+  // Check PhonePe redirect returns (auto-verify payment status)
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    let txnId = searchParams.get("txnId");
+    let isCheck = searchParams.get("payment") === "check";
+
+    if (!txnId && window.location.hash.includes("txnId=")) {
+      const hashPart = window.location.hash.split("?")[1] || "";
+      const hashParams = new URLSearchParams(hashPart);
+      txnId = hashParams.get("txnId");
+      isCheck = hashParams.get("payment") === "check" || Boolean(txnId);
+    }
+
+    if (txnId && isCheck) {
+      setIsVerifyingPayment(true);
+      checkPhonePePaymentStatus(txnId)
+        .then((res) => {
+          setPaymentResult(res);
+          refreshSession();
+        })
+        .catch((err) => {
+          setPaymentResult({
+            success: false,
+            code: "VERIFICATION_FAILED",
+            message: err.message || "Failed to verify PhonePe transaction status.",
+          });
+        })
+        .finally(() => {
+          setIsVerifyingPayment(false);
+          // Clean URL without reload
+          const cleanUrl = window.location.pathname + "#cart";
+          window.history.replaceState({}, document.title, cleanUrl);
+        });
+    }
+  }, [refreshSession]);
 
   const handleQuantity = async (productId, quantity) => {
     setPendingId(productId);
@@ -205,8 +415,18 @@ export default function CartPage({
       return;
     }
 
+    if (!checkoutData.phone.trim()) {
+      setCheckoutMessage("Please enter your contact phone number.");
+      return;
+    }
+    if (!checkoutData.address.trim()) {
+      setCheckoutMessage("Please enter your delivery address.");
+      return;
+    }
+
     try {
       setIsCheckingOut(true);
+      setCheckoutMessage("");
       const response = await createOrder({
         name: user?.name,
         email: user?.email,
@@ -215,12 +435,25 @@ export default function CartPage({
         paymentMethod: checkoutData.paymentMethod,
         couponCode: appliedCoupon?.code || "",
       });
+
+      // If PhonePe paymentUrl is returned, redirect to PhonePe Sandbox Simulator
+      if (response.paymentUrl) {
+        setCheckoutMessage("Redirecting to PhonePe Sandbox Payment Gateway...");
+        window.location.href = response.paymentUrl;
+        return;
+      }
+
       await refreshSession();
       setAppliedCoupon(null);
       setCouponInput("");
       setCheckoutMessage(
         `${response.data.orderNumber} placed successfully at ${formatINR(response.data.total)}.`
       );
+      setPaymentResult({
+        success: true,
+        order: response.data,
+        message: "Order placed successfully.",
+      });
     } catch (error) {
       setCheckoutMessage(error.message || "Checkout failed. Please try again.");
     } finally {
@@ -254,6 +487,22 @@ export default function CartPage({
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-8 pb-16 sm:px-6 sm:py-10 sm:pb-20 lg:px-8 lg:py-12 lg:pb-24">
+      {/* Verification Overlay */}
+      {isVerifyingPayment && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm text-white">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-white/20 border-t-[#5F259F]" />
+          <p className="mt-4 text-base font-semibold">Verifying PhonePe Payment...</p>
+          <p className="text-xs text-stone-300">Checking transaction status with gateway</p>
+        </div>
+      )}
+
+      {/* Payment Result Modal */}
+      <PaymentResultModal
+        result={paymentResult}
+        onClose={() => setPaymentResult(null)}
+        onNavigateHome={onNavigateHome}
+      />
+
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 sm:mb-7">
         <div className="flex items-center gap-2 text-sm text-stone-500">
           <button
@@ -277,7 +526,7 @@ export default function CartPage({
         </button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
         <div className="space-y-5">
           <div className="overflow-hidden rounded-[1.5rem] border border-black/5 bg-white shadow-luxe">
             <div className="grid gap-0 md:grid-cols-[1fr_260px]">
@@ -290,7 +539,7 @@ export default function CartPage({
                 </h1>
                 <p className="mt-3 max-w-xl text-sm leading-7 text-white/70">
                   Review quantities, apply a coupon, see GST, and checkout with
-                  clear rupee pricing.
+                  secure PhonePe or Cash on Delivery.
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-px bg-black/5 text-center md:grid-cols-1">
@@ -429,6 +678,7 @@ export default function CartPage({
           )}
         </div>
 
+        {/* Checkout Sidebar */}
         <aside className="space-y-4 lg:sticky lg:top-24 lg:h-fit">
           <div className="rounded-[1.5rem] border border-black/5 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-center justify-between gap-4">
@@ -518,10 +768,10 @@ export default function CartPage({
 
             <div className="my-5 h-px bg-black/10" />
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <label className="grid gap-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">
-                  Phone
+                  Phone *
                 </span>
                 <input
                   value={checkoutData.phone}
@@ -532,12 +782,12 @@ export default function CartPage({
                     }))
                   }
                   className="h-11 rounded-full border border-black/10 bg-ivory px-4 text-sm outline-none focus:border-gold-300"
-                  placeholder="Delivery phone"
+                  placeholder="Delivery phone number"
                 />
               </label>
               <label className="grid gap-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">
-                  Address
+                  Delivery Address *
                 </span>
                 <textarea
                   value={checkoutData.address}
@@ -548,23 +798,102 @@ export default function CartPage({
                     }))
                   }
                   className="min-h-20 resize-none rounded-[1rem] border border-black/10 bg-ivory px-4 py-3 text-sm outline-none focus:border-gold-300"
-                  placeholder="Delivery address"
+                  placeholder="Full street address, city, pincode"
                 />
               </label>
-              <select
-                value={checkoutData.paymentMethod}
-                onChange={(event) =>
-                  setCheckoutData((current) => ({
-                    ...current,
-                    paymentMethod: event.target.value,
-                  }))
-                }
-                className="h-11 w-full rounded-full border border-black/10 bg-ivory px-4 text-sm outline-none focus:border-gold-300"
-              >
-                <option value="cod">Cash on delivery</option>
-                <option value="upi">UPI</option>
-                <option value="card">Card</option>
-              </select>
+
+              {/* Payment Method Selector */}
+              <div>
+                <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">
+                  Select Payment Method
+                </span>
+                <div className="grid gap-2.5">
+                  {/* PhonePe Option */}
+                  <label
+                    className={`flex cursor-pointer items-center justify-between rounded-2xl border p-3.5 transition ${
+                      checkoutData.paymentMethod === "phonepe"
+                        ? "border-[#5F259F] bg-purple-50/50 shadow-sm"
+                        : "border-black/10 bg-ivory hover:border-purple-200"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="phonepe"
+                        checked={checkoutData.paymentMethod === "phonepe"}
+                        onChange={(e) =>
+                          setCheckoutData((c) => ({ ...c, paymentMethod: e.target.value }))
+                        }
+                        className="accent-[#5F259F]"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <PhonePeBadge />
+                          <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#5F259F]">
+                            Sandbox Test
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-[11px] text-stone-500">
+                          UPI, QR Code, Cards & NetBanking via PhonePe Gateway
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+
+                  {/* Cash on Delivery */}
+                  <label
+                    className={`flex cursor-pointer items-center justify-between rounded-2xl border p-3.5 transition ${
+                      checkoutData.paymentMethod === "cod"
+                        ? "border-gold-500 bg-gold-50/40 shadow-sm"
+                        : "border-black/10 bg-ivory hover:border-gold-200"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="cod"
+                        checked={checkoutData.paymentMethod === "cod"}
+                        onChange={(e) =>
+                          setCheckoutData((c) => ({ ...c, paymentMethod: e.target.value }))
+                        }
+                        className="accent-gold-600"
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-charcoal">Cash on Delivery (COD)</p>
+                        <p className="text-[11px] text-stone-500">Pay in cash when your jewelry arrives</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  {/* Card Payment */}
+                  <label
+                    className={`flex cursor-pointer items-center justify-between rounded-2xl border p-3.5 transition ${
+                      checkoutData.paymentMethod === "card"
+                        ? "border-gold-500 bg-gold-50/40 shadow-sm"
+                        : "border-black/10 bg-ivory hover:border-gold-200"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="card"
+                        checked={checkoutData.paymentMethod === "card"}
+                        onChange={(e) =>
+                          setCheckoutData((c) => ({ ...c, paymentMethod: e.target.value }))
+                        }
+                        className="accent-gold-600"
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-charcoal">Debit / Credit Card</p>
+                        <p className="text-[11px] text-stone-500">Visa, Mastercard, RuPay</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div className="my-5 h-px bg-black/10" />
@@ -580,11 +909,25 @@ export default function CartPage({
               type="button"
               onClick={handleCheckout}
               disabled={!cartItems.length || isCheckingOut}
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-charcoal px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-40"
+              className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 ${
+                checkoutData.paymentMethod === "phonepe"
+                  ? "bg-[#5F259F] hover:bg-[#4d1d82] shadow-md shadow-purple-900/20"
+                  : "bg-charcoal hover:bg-black"
+              }`}
             >
-              <FiCreditCard />
-              {isCheckingOut ? "Placing order..." : "Checkout"}
+              {checkoutData.paymentMethod === "phonepe" ? (
+                <>
+                  <PhonePeBadge />
+                  <span>{isCheckingOut ? "Connecting to PhonePe..." : `Pay ${formatINR(grandTotal)} with PhonePe`}</span>
+                </>
+              ) : (
+                <>
+                  <FiCreditCard />
+                  <span>{isCheckingOut ? "Placing order..." : `Place Order • ${formatINR(grandTotal)}`}</span>
+                </>
+              )}
             </button>
+
             <button
               type="button"
               onClick={onNavigateFavorites}
@@ -592,8 +935,9 @@ export default function CartPage({
             >
               View Favorites
             </button>
+
             {checkoutMessage && (
-              <p className="mt-4 rounded-[1rem] bg-emerald-50 p-3 text-sm font-medium text-emerald-700">
+              <p className="mt-4 rounded-[1rem] bg-amber-50 p-3 text-sm font-medium text-amber-800 border border-amber-200">
                 {checkoutMessage}
               </p>
             )}
