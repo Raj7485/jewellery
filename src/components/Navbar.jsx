@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { FiHeart, FiLogOut, FiMenu, FiSearch, FiShoppingBag, FiUser, FiX } from "react-icons/fi";
+import {
+  FiHeart,
+  FiLogOut,
+  FiMenu,
+  FiSearch,
+  FiShield,
+  FiShoppingBag,
+  FiUser,
+  FiX,
+} from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import { navLinks } from "../data";
 
@@ -91,6 +100,16 @@ export default function Navbar({ currentView, onNavigate }) {
             <>
               <button
                 type="button"
+                onClick={() => handleNavigate({ href: "/admin", view: "admin" })}
+                className={`grid h-11 w-11 place-items-center rounded-full border border-black/10 bg-white transition hover:-translate-y-0.5 hover:border-gold-300 hover:text-gold-700 ${
+                  currentView === "admin" ? "text-gold-700" : "text-stone-700"
+                }`}
+                aria-label="Admin"
+              >
+                <FiShield />
+              </button>
+              <button
+                type="button"
                 onClick={() => handleNavigate({ href: "#favorites", view: "favorites" })}
                 className="inline-flex h-11 items-center gap-2 rounded-full border border-black/10 bg-white px-4 text-sm font-semibold text-stone-700 transition hover:-translate-y-0.5 hover:border-gold-300 hover:text-gold-700"
               >
@@ -179,14 +198,24 @@ export default function Navbar({ currentView, onNavigate }) {
               Cart {cartCount ? `(${cartCount})` : ""}
             </button>
             {isAuthenticated ? (
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-charcoal px-4 py-3 text-sm font-semibold text-white"
-              >
-                <FiLogOut />
-                Logout
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleNavigate({ href: "/admin", view: "admin" })}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-4 py-3 text-sm text-stone-700"
+                >
+                  <FiShield />
+                  Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-charcoal px-4 py-3 text-sm font-semibold text-white"
+                >
+                  <FiLogOut />
+                  Logout
+                </button>
+              </>
             ) : (
               <button
                 type="button"

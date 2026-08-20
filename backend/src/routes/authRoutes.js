@@ -12,6 +12,7 @@ function toAuthResponse(user) {
       id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
       favorites: (user.favorites || []).map((favorite) =>
         favorite._id ? favorite._id.toString() : favorite.toString()
       ),
@@ -38,7 +39,17 @@ router.post("/register", async (req, res, next) => {
       return res.status(409).json({ message: "An account with this email already exists." });
     }
 
-    const user = await User.create({ name, email, password });
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+    const existingUsers = await User.estimatedDocumentCount();
+    const role =
+      existingUsers === 0 || adminEmails.includes(email.toLowerCase())
+        ? "admin"
+        : "customer";
+
+    const user = await User.create({ name, email, password, role });
     res.status(201).json(toAuthResponse(user));
   } catch (error) {
     next(error);
@@ -82,6 +93,7 @@ router.get("/me", protect, (req, res) => {
       id: req.user._id,
       name: req.user.name,
       email: req.user.email,
+      role: req.user.role,
       favorites: req.user.favorites,
       cartItems,
       cartTotalItems: totalItems,

@@ -7,7 +7,7 @@ import {
 import { formatProductPrice, toInrAmount } from "../utils/currency";
 
 function normalizeProduct(product) {
-  const sourceCurrency = product.currency || "USD";
+  const sourceCurrency = product.currency || "INR";
 
   return {
     ...product,

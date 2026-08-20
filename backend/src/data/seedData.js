@@ -322,3 +322,33 @@ export const products = [
     description: "A soft stacking bracelet with a polished modern profile.",
   },
 ];
+
+export const offers = [
+  {
+    code: "JEWEL10",
+    title: "Jewelry cart discount",
+    discountType: "percentage",
+    discountValue: 10,
+    minSpend: 20000,
+    maxDiscount: 5000,
+    status: "active",
+  },
+  {
+    code: "SPARKLE15",
+    title: "Premium sparkle edit",
+    discountType: "percentage",
+    discountValue: 15,
+    minSpend: 50000,
+    maxDiscount: 9000,
+    status: "active",
+  },
+  {
+    code: "WELCOME500",
+    title: "Welcome gift",
+    discountType: "fixed",
+    discountValue: 500,
+    minSpend: 5000,
+    maxDiscount: 500,
+    status: "active",
+  },
+];

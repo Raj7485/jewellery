@@ -21,7 +21,7 @@ function normalizeProduct(product) {
     id: product._id || product.id || product.slug || product.name,
     slug: product.slug || product.id || product._id,
     priceLabel: formatProductPrice(product),
-    priceAmount: toInrAmount(product.price, product.currency || "USD"),
+    priceAmount: toInrAmount(product.price, product.currency || "INR"),
     rating: Number(product.rating) || 5,
   };
 }

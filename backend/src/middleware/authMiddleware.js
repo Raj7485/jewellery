@@ -31,3 +31,11 @@ export async function protect(req, res, next) {
     res.status(401).json({ message: "Your session expired. Please log in again." });
   }
 }
+
+export function adminOnly(req, res, next) {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ message: "Admin access is required." });
+  }
+
+  next();
+}

@@ -15,15 +15,10 @@ function numericAmount(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-export function toInrAmount(value, currency = "USD") {
+export function toInrAmount(value, currency = "INR") {
   const amount = numericAmount(value);
-  const normalizedCurrency = String(currency || "USD").toUpperCase();
-
-  if (normalizedCurrency === "INR" || currency === "₹") {
-    return amount;
-  }
-
-  return amount * USD_TO_INR_RATE;
+  // All prices are stored in INR — no conversion needed
+  return amount;
 }
 
 export function formatINR(value) {
@@ -31,8 +26,5 @@ export function formatINR(value) {
 }
 
 export function formatProductPrice(product = {}) {
-  const sourceCurrency =
-    product.currency || (String(product.price || "").includes("₹") ? "INR" : "USD");
-
-  return formatINR(toInrAmount(product.price, sourceCurrency));
+  return formatINR(toInrAmount(product.price, "INR"));
 }

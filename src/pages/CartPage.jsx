@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FiCheckCircle,
   FiCreditCard,
@@ -14,6 +14,7 @@ import {
 } from "react-icons/fi";
 import CatalogImage from "../components/CatalogImage";
 import FavoriteButton from "../components/FavoriteButton";
+import { createOrder, getActiveOffers } from "../api/catalog";
 import { useAuth } from "../context/AuthContext";
 import { formatINR, toInrAmount } from "../utils/currency";
 
@@ -21,7 +22,7 @@ const GST_RATE = 0.03;
 const FREE_DELIVERY_THRESHOLD = 20000;
 const DELIVERY_FEE = 249;
 
-const coupons = {
+const fallbackCoupons = {
   JEWEL10: {
     code: "JEWEL10",
     label: "10% off up to ₹5,000",
@@ -42,6 +43,30 @@ const coupons = {
   },
 };
 
+function couponFromOffer(offer) {
+  return {
+    code: offer.code,
+    label:
+      offer.discountType === "free_shipping"
+        ? "Free shipping"
+        : offer.discountType === "fixed"
+          ? `${formatINR(offer.discountValue)} off`
+          : `${offer.discountValue}% off${
+              offer.maxDiscount ? ` up to ${formatINR(offer.maxDiscount)}` : ""
+            }`,
+    minSpend: offer.minSpend || 0,
+    discount:
+      offer.discountType === "fixed"
+        ? () => offer.discountValue || 0
+        : offer.discountType === "free_shipping"
+          ? () => 0
+          : (subtotal) => {
+              const discount = subtotal * ((offer.discountValue || 0) / 100);
+              return offer.maxDiscount ? Math.min(discount, offer.maxDiscount) : discount;
+            },
+  };
+}
+
 function getProductId(product) {
   return product._id || product.id;
 }
@@ -60,7 +85,9 @@ export default function CartPage({
     isAuthenticated,
     loading,
     removeFromCart,
+    refreshSession,
     updateCartQuantity,
+    user,
   } = useAuth();
   const [pendingId, setPendingId] = useState("");
   const [clearing, setClearing] = useState(false);
@@ -68,6 +95,13 @@ export default function CartPage({
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponMessage, setCouponMessage] = useState("");
   const [checkoutMessage, setCheckoutMessage] = useState("");
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [coupons, setCoupons] = useState(fallbackCoupons);
+  const [checkoutData, setCheckoutData] = useState({
+    phone: "",
+    address: "",
+    paymentMethod: "cod",
+  });
 
   const subtotal = useMemo(() => toInrAmount(cartTotal), [cartTotal]);
   const couponDiscount = useMemo(() => {
@@ -82,6 +116,33 @@ export default function CartPage({
   const delivery = taxableAmount > 0 && taxableAmount < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
   const grandTotal = taxableAmount + gst + delivery;
   const savingsToFreeDelivery = Math.max(FREE_DELIVERY_THRESHOLD - taxableAmount, 0);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadOffers() {
+      try {
+        const response = await getActiveOffers();
+        const activeCoupons = Object.fromEntries(
+          (response.data || []).map((offer) => [offer.code, couponFromOffer(offer)])
+        );
+
+        if (isActive && Object.keys(activeCoupons).length) {
+          setCoupons(activeCoupons);
+        }
+      } catch (_error) {
+        if (isActive) {
+          setCoupons(fallbackCoupons);
+        }
+      }
+    }
+
+    loadOffers();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const handleQuantity = async (productId, quantity) => {
     setPendingId(productId);
@@ -124,7 +185,7 @@ export default function CartPage({
 
     if (!coupon) {
       setAppliedCoupon(null);
-      setCouponMessage("Try JEWEL10, SPARKLE15, or WELCOME500.");
+      setCouponMessage(`Available: ${Object.keys(coupons).join(", ")}.`);
       return;
     }
 
@@ -139,14 +200,32 @@ export default function CartPage({
     setCouponMessage(`${code} applied. ${coupon.label}`);
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!cartItems.length) {
       return;
     }
 
-    setCheckoutMessage(
-      `Checkout total confirmed at ${formatINR(grandTotal)} including GST.`
-    );
+    try {
+      setIsCheckingOut(true);
+      const response = await createOrder({
+        name: user?.name,
+        email: user?.email,
+        phone: checkoutData.phone,
+        address: checkoutData.address,
+        paymentMethod: checkoutData.paymentMethod,
+        couponCode: appliedCoupon?.code || "",
+      });
+      await refreshSession();
+      setAppliedCoupon(null);
+      setCouponInput("");
+      setCheckoutMessage(
+        `${response.data.orderNumber} placed successfully at ${formatINR(response.data.total)}.`
+      );
+    } catch (error) {
+      setCheckoutMessage(error.message || "Checkout failed. Please try again.");
+    } finally {
+      setIsCheckingOut(false);
+    }
   };
 
   if (!isAuthenticated && !loading) {
@@ -398,7 +477,7 @@ export default function CartPage({
                 </button>
               </div>
               <p className="mt-2 min-h-5 text-xs leading-5 text-stone-500">
-                {couponMessage || "Available: JEWEL10, SPARKLE15, WELCOME500"}
+                {couponMessage || `Available: ${Object.keys(coupons).join(", ")}`}
               </p>
               {appliedCoupon && (
                 <button
@@ -439,6 +518,57 @@ export default function CartPage({
 
             <div className="my-5 h-px bg-black/10" />
 
+            <div className="space-y-3">
+              <label className="grid gap-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">
+                  Phone
+                </span>
+                <input
+                  value={checkoutData.phone}
+                  onChange={(event) =>
+                    setCheckoutData((current) => ({
+                      ...current,
+                      phone: event.target.value,
+                    }))
+                  }
+                  className="h-11 rounded-full border border-black/10 bg-ivory px-4 text-sm outline-none focus:border-gold-300"
+                  placeholder="Delivery phone"
+                />
+              </label>
+              <label className="grid gap-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">
+                  Address
+                </span>
+                <textarea
+                  value={checkoutData.address}
+                  onChange={(event) =>
+                    setCheckoutData((current) => ({
+                      ...current,
+                      address: event.target.value,
+                    }))
+                  }
+                  className="min-h-20 resize-none rounded-[1rem] border border-black/10 bg-ivory px-4 py-3 text-sm outline-none focus:border-gold-300"
+                  placeholder="Delivery address"
+                />
+              </label>
+              <select
+                value={checkoutData.paymentMethod}
+                onChange={(event) =>
+                  setCheckoutData((current) => ({
+                    ...current,
+                    paymentMethod: event.target.value,
+                  }))
+                }
+                className="h-11 w-full rounded-full border border-black/10 bg-ivory px-4 text-sm outline-none focus:border-gold-300"
+              >
+                <option value="cod">Cash on delivery</option>
+                <option value="upi">UPI</option>
+                <option value="card">Card</option>
+              </select>
+            </div>
+
+            <div className="my-5 h-px bg-black/10" />
+
             <div className="grid grid-cols-[1fr_auto] items-end gap-6">
               <span className="text-sm font-medium text-stone-500">Payable total</span>
               <span className="text-right font-display text-4xl font-semibold tabular-nums text-charcoal">
@@ -449,11 +579,11 @@ export default function CartPage({
             <button
               type="button"
               onClick={handleCheckout}
-              disabled={!cartItems.length}
+              disabled={!cartItems.length || isCheckingOut}
               className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-charcoal px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-40"
             >
               <FiCreditCard />
-              Checkout
+              {isCheckingOut ? "Placing order..." : "Checkout"}
             </button>
             <button
               type="button"

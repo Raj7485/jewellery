@@ -174,6 +174,17 @@ export function AuthProvider({ children }) {
     return response;
   };
 
+  const refreshSession = async () => {
+    const response = await getCurrentUser();
+    setUser({
+      ...response.data,
+      favorites: favoriteIdsFromUser(response.data),
+    });
+    setFavoriteProducts(response.data.favorites || []);
+    setCartItems(normalizeCartItems(response.data.cartItems || []));
+    return response;
+  };
+
   const addToCart = async (product, quantity = 1) => {
     if (!user) {
       throw new Error("Please login to add products to your cart.");
@@ -229,6 +240,7 @@ export function AuthProvider({ children }) {
     updateCartQuantity,
     removeFromCart,
     clearCart,
+    refreshSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

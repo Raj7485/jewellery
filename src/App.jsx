@@ -10,9 +10,19 @@ import AuthPage from "./pages/AuthPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import CartPage from "./pages/CartPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
+import AdminPage from "./pages/AdminPage";
 
 export default function App() {
   const getRouteFromHash = () => {
+    const pathname = window.location.pathname.replace(/\/$/, "");
+
+    if (pathname === "/admin") {
+      return {
+        view: "admin",
+        productSlug: "",
+      };
+    }
+
     const hash = window.location.hash;
 
     if (hash.startsWith("#product/")) {
@@ -40,7 +50,9 @@ export default function App() {
                       ? "favorites"
                       : hash === "#cart"
                         ? "cart"
-                        : "home",
+                        : hash === "#admin"
+                          ? "admin"
+                          : "home",
       productSlug: "",
     };
   };
@@ -54,7 +66,11 @@ export default function App() {
     };
 
     window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
+    window.addEventListener("popstate", handleHashChange);
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+      window.removeEventListener("popstate", handleHashChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -74,11 +90,26 @@ export default function App() {
         "register",
         "favorites",
         "cart",
+        "admin",
       ].includes(link.view)
     ) {
+      if (link.view === "admin") {
+        window.history.pushState({}, "", "/admin");
+        setRoute({ view: "admin", productSlug: "" });
+        return;
+      }
+
+      if (window.location.pathname.replace(/\/$/, "") === "/admin") {
+        window.history.pushState({}, "", "/");
+      }
+
       window.location.hash = link.view;
       setRoute({ view: link.view, productSlug: "" });
       return;
+    }
+
+    if (window.location.pathname.replace(/\/$/, "") === "/admin") {
+      window.history.pushState({}, "", "/");
     }
 
     window.location.hash = link.href;
@@ -90,6 +121,15 @@ export default function App() {
     window.location.hash = `product/${nextSlug}`;
     setRoute({ view: "product", productSlug: slug });
   };
+
+  // Admin gets its own full-screen layout — no navbar, footer, or site wrapper
+  if (currentView === "admin") {
+    return (
+      <AdminPage
+        onNavigateHome={() => handleNavigate({ href: "#home", view: "home" })}
+      />
+    );
+  }
 
   return (
     <div className="luxury-grid min-h-screen overflow-x-hidden">
@@ -166,3 +206,4 @@ export default function App() {
     </div>
   );
 }
+

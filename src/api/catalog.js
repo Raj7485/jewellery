@@ -127,3 +127,95 @@ export function clearCartProducts() {
     method: "DELETE",
   });
 }
+
+export function getActiveOffers() {
+  return request("/offers");
+}
+
+export function createOrder(payload) {
+  return request("/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getAdminSummary() {
+  return request("/admin/summary");
+}
+
+export function getAdminProducts(search = "") {
+  return request(`/admin/products${buildQuery({ search })}`);
+}
+
+export function createAdminProduct(payload) {
+  return request("/admin/products", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateAdminProduct(productId, payload) {
+  return request(`/admin/products/${productId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteAdminProduct(productId) {
+  return request(`/admin/products/${productId}`, {
+    method: "DELETE",
+  });
+}
+
+export function uploadAdminImage(payload) {
+  return request("/admin/upload", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getAdminOrders() {
+  return request("/admin/orders");
+}
+
+export function updateAdminOrder(orderId, payload) {
+  return request(`/admin/orders/${orderId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getAdminUsers() {
+  return request("/admin/users");
+}
+
+export function updateAdminUser(userId, payload) {
+  return request(`/admin/users/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getAdminOffers() {
+  return request("/admin/offers");
+}
+
+export function createAdminOffer(payload) {
+  return request("/admin/offers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateAdminOffer(offerId, payload) {
+  return request(`/admin/offers/${offerId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteAdminOffer(offerId) {
+  return request(`/admin/offers/${offerId}`, {
+    method: "DELETE",
+  });
+}
