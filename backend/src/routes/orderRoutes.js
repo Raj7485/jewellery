@@ -9,7 +9,7 @@ const router = express.Router();
 const GST_RATE = 0.03;
 const FREE_DELIVERY_THRESHOLD = 20000;
 const DELIVERY_FEE = 249;
-const USD_TO_INR_RATE = 83;
+// All prices in the DB are stored in INR — no USD conversion needed.
 
 function getProductId(product) {
   return product?._id ? product._id.toString() : product?.toString();
@@ -32,15 +32,9 @@ function calculateOfferDiscount(offer, subtotal) {
   return offer.maxDiscount ? Math.min(discount, offer.maxDiscount) : discount;
 }
 
-function toInrAmount(value, currency = "$") {
-  const amount = Number(value) || 0;
-  const normalizedCurrency = String(currency || "$").toUpperCase();
-
-  if (normalizedCurrency === "INR" || currency === "₹") {
-    return amount;
-  }
-
-  return amount * USD_TO_INR_RATE;
+function toInrAmount(value, currency = "INR") {
+  // All prices are stored in INR — always return as-is.
+  return Number(value) || 0;
 }
 
 /* ─── PhonePe Webhook Callback (Public) ───────────────────── */

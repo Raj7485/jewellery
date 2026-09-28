@@ -26,7 +26,7 @@ const productSchema = new mongoose.Schema(
     },
     currency: {
       type: String,
-      default: "$",
+      default: "INR",
       trim: true,
     },
     rating: {

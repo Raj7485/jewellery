@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, execSync } from "node:child_process";
 
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
@@ -21,7 +21,7 @@ const processes = [
 
 const running = processes.map(({ name, command, args }) => {
   const child = spawn(command, args, {
-    stdio: ["inherit", "pipe", "pipe"],
+    stdio: ["ignore", "pipe", "pipe"],
     shell: process.platform === "win32",
   });
 
@@ -44,8 +44,16 @@ const running = processes.map(({ name, command, args }) => {
 
 function stopAll() {
   running.forEach((child) => {
-    if (!child.killed) {
-      child.kill();
+    if (!child.killed && child.pid) {
+      if (process.platform === "win32") {
+        try {
+          execSync(`taskkill /F /T /PID ${child.pid}`, { stdio: "ignore" });
+        } catch {
+          // Process already ended
+        }
+      } else {
+        child.kill();
+      }
     }
   });
 }
@@ -58,4 +66,8 @@ process.on("SIGINT", () => {
 process.on("SIGTERM", () => {
   stopAll();
   process.exit(0);
+});
+
+process.on("exit", () => {
+  stopAll();
 });

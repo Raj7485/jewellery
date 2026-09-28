@@ -52,7 +52,7 @@ export const categories = [
 export const products = [
   {
     name: "Aurora Diamond Ring",
-    price: "₹34,860",
+    price: "₹45,000",
     rating: 5,
     image: realImages.ring,
     category: "Rings",
@@ -62,7 +62,7 @@ export const products = [
   },
   {
     name: "Pearl Cascade Necklace",
-    price: "₹46,480",
+    price: "₹72,000",
     rating: 5,
     image: realImages.necklace,
     category: "Necklaces",
@@ -72,7 +72,7 @@ export const products = [
   },
   {
     name: "Golden Halo Earrings",
-    price: "₹23,240",
+    price: "₹28,000",
     rating: 4,
     image: realImages.earrings,
     category: "Earrings",
@@ -82,7 +82,7 @@ export const products = [
   },
   {
     name: "Luna Tennis Bracelet",
-    price: "₹32,370",
+    price: "₹38,000",
     rating: 5,
     image: realImages.bracelet,
     category: "Bracelets",
@@ -92,7 +92,7 @@ export const products = [
   },
   {
     name: "Celeste Signet Ring",
-    price: "₹28,220",
+    price: "₹25,000",
     rating: 4,
     image: realImages.ring,
     category: "Rings",
@@ -102,7 +102,7 @@ export const products = [
   },
   {
     name: "Moonlight Pendant",
-    price: "₹39,840",
+    price: "₹55,000",
     rating: 5,
     image: realImages.necklace,
     category: "Necklaces",
@@ -112,7 +112,7 @@ export const products = [
   },
   {
     name: "Opal Arc Earrings",
-    price: "₹21,580",
+    price: "₹22,000",
     rating: 4,
     image: realImages.earrings,
     category: "Earrings",
@@ -122,7 +122,7 @@ export const products = [
   },
   {
     name: "Radiant Cuff Bracelet",
-    price: "₹35,690",
+    price: "₹68,000",
     rating: 5,
     image: realImages.bracelet,
     category: "Bracelets",

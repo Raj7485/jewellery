@@ -190,7 +190,11 @@ export function AuthProvider({ children }) {
       throw new Error("Please login to add products to your cart.");
     }
 
-    const productId = product._id || product.id;
+    // Use _id first (from MongoDB), then slug, then id as fallback
+    const productId = product._id || product.slug || product.id;
+    if (!productId) {
+      throw new Error("Invalid product.");
+    }
     const response = await addCartProduct(productId, quantity);
     return applyCartResponse(response);
   };
