@@ -101,7 +101,7 @@ function AdminLoginPage({ onNavigateHome }) {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold-500/20 ring-1 ring-gold-400/30 text-gold-400">
                 <FaGem size={20} />
               </div>
-              <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.3em] text-gold-400">Admin Portal</p>
+              <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.3em] text-gold-400">Admin Panel</p>
               <h1 className="mt-2 font-display text-3xl sm:text-4xl font-semibold text-white leading-tight">
                 Welcome to the<br/>Control Centre
               </h1>
