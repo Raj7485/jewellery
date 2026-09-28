@@ -275,6 +275,25 @@ router.patch("/users/:id", async (req, res, next) => {
   }
 });
 
+router.delete("/users/:id", async (req, res, next) => {
+  try {
+    // Prevent admin from deleting their own account
+    if (req.user._id.toString() === req.params.id) {
+      return res.status(400).json({ message: "You cannot delete your own account." });
+    }
+
+    const user = await User.findByIdAndDelete(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.json({ data: user, message: "User removed successfully." });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/offers", async (_req, res, next) => {
   try {
     const offers = await Offer.find().sort({ createdAt: -1 });

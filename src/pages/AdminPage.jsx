@@ -33,6 +33,7 @@ import {
   createAdminProduct,
   deleteAdminOffer,
   deleteAdminProduct,
+  deleteAdminUser,
   getAdminSummary,
   updateAdminOffer,
   updateAdminOrder,
@@ -737,6 +738,12 @@ export default function AdminPage({ onNavigateHome }) {
     catch (err) { notify(err.message || "Update failed.", "error"); }
   }
 
+  async function handleDeleteUser(id) {
+    if (!confirm("Are you sure you want to remove this user? This action cannot be undone.")) return;
+    try { await deleteAdminUser(id); notify("User removed."); await loadAdmin(); }
+    catch (err) { notify(err.message || "Remove failed.", "error"); }
+  }
+
   async function handleSaveOffer(e) {
     e.preventDefault();
     try {
@@ -1269,6 +1276,7 @@ export default function AdminPage({ onNavigateHome }) {
                         <Th>Role</Th>
                         <Th>Joined</Th>
                         <Th>Change Role</Th>
+                        <Th>Action</Th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-100">
@@ -1295,10 +1303,24 @@ export default function AdminPage({ onNavigateHome }) {
                               <option value="admin">Admin</option>
                             </Select>
                           </td>
+                          <td className="px-5 py-3.5">
+                            {u._id !== user?._id ? (
+                              <button
+                                onClick={() => handleDeleteUser(u._id)}
+                                title="Remove user"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition-all hover:bg-red-100 hover:border-red-300 hover:text-red-700 active:scale-95"
+                              >
+                                <FiTrash2 size={12} />
+                                Remove
+                              </button>
+                            ) : (
+                              <span className="text-xs text-stone-300 italic">You</span>
+                            )}
+                          </td>
                         </tr>
                       ))}
                       {!users.length && (
-                        <tr><td colSpan={5} className="px-5 py-12 text-center text-sm text-stone-400">No users found.</td></tr>
+                        <tr><td colSpan={6} className="px-5 py-12 text-center text-sm text-stone-400">No users found.</td></tr>
                       )}
                     </tbody>
                   </TableWrap>

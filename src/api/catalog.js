@@ -200,6 +200,12 @@ export function updateAdminUser(userId, payload) {
   });
 }
 
+export function deleteAdminUser(userId) {
+  return request(`/admin/users/${userId}`, {
+    method: "DELETE",
+  });
+}
+
 export function getAdminOffers() {
   return request("/admin/offers");
 }
