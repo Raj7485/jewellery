@@ -810,7 +810,7 @@ export default function AdminPage({ onNavigateHome }) {
           </div>
           <div>
             <span className="text-sm font-bold text-charcoal">Admin</span>
-            <span className="text-sm font-bold text-gold-600">Portal</span>
+            <span className="text-sm font-bold text-gold-600">Panel</span>
           </div>
           <button className="ml-auto text-stone-400 hover:text-stone-700 lg:hidden" onClick={() => setSidebarOpen(false)}>
             <FiX size={20} />
